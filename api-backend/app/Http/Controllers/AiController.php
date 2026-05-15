@@ -167,6 +167,18 @@ class AiController extends Controller
             usort($scores, function ($a, $b) { return $b['score'] <=> $a['score']; });
 
             $top = array_slice($scores, 0, 5);
+
+            // If the question appears nonsensical or the best-matching chunk is
+            // far below a relevance threshold, refuse to answer based on external
+            // knowledge and ask the user to provide a relevant section.
+            $bestScore = isset($top[0]['score']) ? (float)$top[0]['score'] : 0.0;
+            if ($this->isNonsenseQuestion($request->question) || $bestScore < 0.12) {
+                return response()->json([
+                    'answer' => "I don't see that in the uploaded materials. Could you clarify or upload a relevant section?",
+                    'note' => 'response restricted to uploaded document only',
+                ], 200);
+            }
+
             $contextText = implode("\n\n", array_map(function ($s) { return $s['chunk']['chunk_text']; }, $top));
         }
 
@@ -499,6 +511,22 @@ PROMPT;
         return array_values(array_filter($parts, function ($word) {
             return mb_strlen($word) > 2;
         }));
+    }
+
+    private function isNonsenseQuestion(string $q): bool
+    {
+        $trim = trim($q);
+        if (mb_strlen($trim) < 3) return true;
+
+        // Count alphanumeric characters vs others
+        $letters = preg_replace('/[^a-z0-9]/i', '', $trim);
+        $nonAlpha = mb_strlen($trim) - mb_strlen($letters);
+        if (mb_strlen($letters) === 0) return true;
+
+        // If most characters are non-alphanumeric, treat as nonsense
+        if ($nonAlpha / max(1, mb_strlen($trim)) > 0.6) return true;
+
+        return false;
     }
 
     private function keywordOverlapScore(array $questionTokens, array $chunkTokens): float

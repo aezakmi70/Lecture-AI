@@ -1,6 +1,6 @@
 # Startup Commands — AI Lecture Note Chatbot
 
-Quick reference for starting the app (development) on a fresh Windows or UNIX laptop.
+Quick reference for starting the app (development) on a fresh Windows or  laptop.
 
 ---
 
@@ -17,18 +17,6 @@ php artisan storage:link
 php artisan serve --host=127.0.0.1 --port=8000
 ```
 
-## Backend (macOS / Linux)
-
-```bash
-cd "AI Lecture Note Chatbot/api-backend"
-composer install
-cp .env.example .env
-# Edit .env
-php artisan key:generate
-php artisan migrate
-php artisan storage:link
-php artisan serve --host=127.0.0.1 --port=8000
-```
 
 ## Frontend (Windows / macOS / Linux)
 
